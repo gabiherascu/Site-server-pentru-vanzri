@@ -3,143 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CraftMarket - Piața Virtuală Minecraft</title>
-    <!-- 1. Legătura către fișierul CSS (Trebuie să fie în același folder) -->
+    <title>CraftMarket Premium - Piața Virtuală Minecraft</title>
+    <!-- Legătura către stilul extern -->
     <link rel="stylesheet" href="style.css">
-    <!-- 2. Legătura către script cu DEFER (previne erorile de tip 'Cannot read properties of null') -->
+    <!-- Legătura către logica JavaScript cu defer (garantează încărcarea corectă) -->
     <script src="app.js" defer></script>
 </head>
 <body>
 
-    <header>
-        <div class="header-container">
-            <a href="#" class="logo">Craft<span>Market</span></a>
+    <div id="mainApp">
+        <!-- HEADER ULTRAMODERN -->
+        <header>
+            <div class="header-container">
+                <a href="#" class="logo" onclick="resetFilters()">
+                    <div class="logo-cube"></div>
+                    Craft<span>Market</span>
+                </a>
+                
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" class="search-bar" placeholder="Caută arme magice, blocuri de minerale, coordonate...">
+                </div>
+
+                <div class="nav-actions">
+                    <button class="btn btn-secondary" onclick="toggleDrawer('adminDrawer')">
+                        🗑️ Șterge un Anunț
+                    </button>
+                    <button class="btn btn-primary" onclick="toggleDrawer('createAdDrawer')">
+                        <span class="plus-icon">+</span> Adaugă Anunț
+                    </button>
+                    <button class="btn btn-profile" id="profileBtn" onclick="toggleDrawer('profileDrawer')">
+                        👤 Profil
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUBHEADER: TRENDING TAGS & FILTRE DE CATEGORII -->
+            <div class="sub-header">
+                <div class="trending-searches">
+                    <span class="trending-label">🔥 Căutări frecvente:</span>
+                    <span class="tag" onclick="quickSearch('Netherite')">Netherite</span>
+                    <span class="tag" onclick="quickSearch('Beacon')">Beacon</span>
+                    <span class="tag" onclick="quickSearch('Elytra')">Elytra</span>
+                    <span class="tag" onclick="quickSearch('Shulker')">Shulker Box</span>
+                    <span class="tag" onclick="quickSearch('Fermă')">Fermă de Aur</span>
+                </div>
+
+                <div class="categories-bar">
+                    <button id="cat-Toate" class="category-btn active" onclick="filterCategory('Toate', this)">🎒 Toate Iteme</button>
+                    <button class="category-btn" onclick="filterCategory('Armuri/Unelte', this)">⚔️ Armuri & Unelte</button>
+                    <button class="category-btn" onclick="filterCategory('Resurse', this)">💎 Resurse & Minerale</button>
+                    <button class="category-btn" onclick="filterCategory('Terenuri', this)">🏡 Terenuri & Zone</button>
+                    <button class="category-btn" onclick="filterCategory('Servicii', this)">✨ Enchant-uri & Servicii</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ZONA PRINCIPALA DE CONȚINUT -->
+        <main>
+            <!-- PREȚ ȘI MONEDĂ EXCLUSIVĂ BANNER -->
+            <div class="filters-panel">
+                <div class="currency-status">
+                    <span class="diamond-sparkle">💎</span>
+                    <span>Piață securizată prin comerț cu <strong>Diamante Minecraft</strong></span>
+                </div>
+                <button class="btn btn-reset" onclick="resetFilters()">Resetare Căutare</button>
+            </div>
+
+            <!-- GRID-UL CU CARDURILE -->
+            <div class="listings-grid" id="listingsGrid"></div>
+        </main>
+
+        <!-- SERTARUL DE PROFIL -->
+        <div class="drawer" id="profileDrawer">
+            <div class="drawer-header">
+                <h3>Cont Jucător</h3>
+                <button class="close-drawer" onclick="toggleDrawer('profileDrawer')">&times;</button>
+            </div>
             
-            <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-bar" placeholder="Caută săbii, resurse, parcele...">
+            <div class="session-box">
+                <label class="session-label">Identitate Implicită (MC IGN)</label>
+                <div class="username-change-wrapper">
+                    <input type="text" id="usernameChangeInput" class="form-control" placeholder="Introdu nume nou">
+                    <button class="btn btn-primary" style="padding: 0 15px;" onclick="saveUsernameChange()">Salvează</button>
+                </div>
+                <small class="session-hint">Acest nume va fi completat automat în formularul de adăugare anunț.</small>
             </div>
 
-            <div class="nav-actions">
-                <button class="btn btn-secondary" onclick="toggleDrawer('adminDrawer')">
-                    🗑️ Anunțurile Mele
+            <div class="profile-tabs">
+                <button id="btn-tab-stats" class="tab-btn active" onclick="switchTab('tab-stats', 'btn-tab-stats')">Activitate</button>
+                <button id="btn-tab-sold" class="tab-btn" onclick="switchTab('tab-sold', 'btn-tab-sold')">Istoric OLX</button>
+            </div>
+
+            <div id="tab-stats" class="tab-content active">
+                <div class="stat-card"><strong>Scor Încredere:</strong> <span style="color:var(--accent-emerald);">⭐ 5.0 / 5.0</span></div>
+                <div class="stat-card"><strong>Schimburi Reușite:</strong> 14 Obiecte</div>
+            </div>
+            
+            <div id="tab-sold" class="tab-content" style="display: none;">
+                <div class="manage-item"><span>📦 64x Blocuri de Diamant</span> <span class="sold-tag">Vândut ✓</span></div>
+                <div class="manage-item"><span>⚔️ Sabie Dragon Breath</span> <span class="sold-tag">Vândut ✓</span></div>
+            </div>
+        </div>
+
+        <!-- SERTARUL DE ADMINISTRARE ȘI ȘTERGERE -->
+        <div class="drawer" id="adminDrawer">
+            <div class="drawer-header">
+                <h3>Gestionare Oferte</h3>
+                <button class="close-drawer" onclick="toggleDrawer('adminDrawer')">&times;</button>
+            </div>
+            <p class="drawer-instruction">Aici poți elimina rapid ofertele din piața virtuală:</p>
+            <div id="myItemsList"></div>
+        </div>
+
+        <!-- SERTARUL DE CREARE ANUNȚ NOU -->
+        <div class="drawer" id="createAdDrawer">
+            <div class="drawer-header">
+                <h3>Publică Anunț Nou</h3>
+                <button class="close-drawer" onclick="toggleDrawer('createAdDrawer')">&times;</button>
+            </div>
+            <form id="newAdForm" onsubmit="createNewAd(event)">
+                <div class="form-group">
+                    <label>Titlu Anunț (Ce vinzi?)</label>
+                    <input type="text" id="adTitle" class="form-control" placeholder="ex: Sabie Netherite Sharpness V" required>
+                </div>
+                <div class="form-group">
+                    <label>Nume Utilizator / Vânzător (Nume Joc)</label>
+                    <input type="text" id="adSeller" class="form-control" placeholder="Numele tău de Minecraft" required>
+                </div>
+                <div class="form-group">
+                    <label>Categorie Produs</label>
+                    <select id="adCategory" class="form-control">
+                        <option value="Armuri/Unelte">⚔️ Armuri & Unelte</option>
+                        <option value="Resurse">💎 Resurse & Minerale</option>
+                        <option value="Terenuri">🏡 Terenuri & Zone</option>
+                        <option value="Servicii">✨ Enchant-uri & Servicii</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Preț Anume Solicitat (Număr exact de Diamante 💎)</label>
+                    <input type="number" id="adPrice" class="form-control" placeholder="Introdu prețul tău (ex: 32)" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Descriere Detaliată (Proprietăți, Coordonate X Y Z)</label>
+                    <textarea id="adDesc" class="form-control" rows="4" placeholder="Adaugă detalii... (enchant-uri, coordonate etc.)" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Etichetă Specială / Insignă</label>
+                    <select id="adBadge" class="form-control">
+                        <option value="">Fără Etichetă</option>
+                        <option value="rar">Item Rar ✨</option>
+                        <option value="top">Ofertă Top 🔥</option>
+                        <option value="nego">Preț Negociabil 🤝</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Încarcă Poza Obiectului (Din fișierele tale)</label>
+                    <input type="file" id="adImage" class="form-control" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px; justify-content: center; padding: 14px;">
+                    🚀 Lansează Oferta pe Piață
                 </button>
-                <button class="btn btn-primary" onclick="toggleDrawer('createAdDrawer')">
-                    ➕ Adaugă Anunț
-                </button>
-                <button class="btn btn-secondary" id="profileBtn" onclick="toggleDrawer('profileDrawer')">
-                    👤 Profil
-                </button>
-            </div>
-        </div>
-
-        <div class="sub-header">
-            <div class="trending-searches">
-                <span>Populare:</span>
-                <span class="tag" onclick="quickSearch('Sabie Netherite')">Sabie Netherite</span>
-                <span class="tag" onclick="quickSearch('Beacon')">Beacon</span>
-                <span class="tag" onclick="quickSearch('Fermă')">Fermă de Aur</span>
-                <span class="tag" onclick="quickSearch('Shulker')">Shulker Box</span>
-            </div>
-
-            <div class="categories-bar">
-                <button class="category-btn active" onclick="filterCategory('Toate', this)">Toate</button>
-                <button class="category-btn" onclick="filterCategory('Armuri/Unelte', this)">⚔️ Armuri & Unelte</button>
-                <button class="category-btn" onclick="filterCategory('Resurse', this)">💎 Resurse</button>
-                <button class="category-btn" onclick="filterCategory('Terenuri', this)">🏡 Terenuri & Construcții</button>
-                <button class="category-btn" onclick="filterCategory('Servicii', this)">✨ Servicii & Enchant-uri</button>
-            </div>
-        </div>
-    </header>
-
-    <main>
-        <div class="listings-grid" id="listingsGrid">
-            <!-- Anunțurile se vor genera dinamic prin JS aici -->
-        </div>
-    </main>
-
-    <!-- Sertar Profil -->
-    <div class="drawer" id="profileDrawer">
-        <div class="drawer-header">
-            <h3>Profil Jucător</h3>
-            <button class="close-drawer" onclick="toggleDrawer('profileDrawer')">&times;</button>
-        </div>
-        <div id="authSection" style="margin-bottom: 20px;">
-            <div class="form-group">
-                <label>Nume Minecraft</label>
-                <input type="text" id="mcUsername" class="form-control" value="Alex_Craft32">
-            </div>
-            <div class="form-group">
-                <label>Parolă Server</label>
-                <input type="password" id="mcPassword" class="form-control" value="******">
-            </div>
-            <button class="btn btn-primary" style="width: 100%;" onclick="saveAuth()">Salvează Datele</button>
-        </div>
-        <div class="profile-tabs">
-            <button class="tab-btn active" onclick="switchTab(event, 'tab-stats')">Statistici</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-active')">Active</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-sold')">Istoric</button>
-        </div>
-        <div id="tab-stats" class="tab-content active">
-            <p><strong>Reputație:</strong> ⭐ 4.9/5</p>
-            <p><strong>Membru din:</strong> 14.02.2026</p>
-        </div>
-        <div id="tab-active" class="tab-content"><p>Vezi panoul de administrare de sus.</p></div>
-        <div id="tab-sold" class="tab-content">
-            <div class="manage-item"><span>📦 64x Elytra</span> <span style="color: var(--accent-emerald)">Vândut</span></div>
+            </form>
         </div>
     </div>
 
-    <!-- Sertar Administrare / Coș Gunoi -->
-    <div class="drawer" id="adminDrawer">
-        <div class="drawer-header">
-            <h3>Gestionare Anunțuri</h3>
-            <button class="close-drawer" onclick="toggleDrawer('adminDrawer')">&times;</button>
-        </div>
-        <div id="myItemsList"></div>
-    </div>
-
-    <!-- Sertar Creare Anunț -->
-    <div class="drawer" id="createAdDrawer">
-        <div class="drawer-header">
-            <h3>Adaugă Anunț Nou</h3>
-            <button class="close-drawer" onclick="toggleDrawer('createAdDrawer')">&times;</button>
-        </div>
-        <form id="newAdForm" onsubmit="createNewAd(event)">
-            <div class="form-group">
-                <label>Titlu Anunț</label>
-                <input type="text" id="adTitle" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>Categorie</label>
-                <select id="adCategory" class="form-control">
-                    <option value="Armuri/Unelte">⚔️ Armuri & Unelte</option>
-                    <option value="Resurse">💎 Resurse</option>
-                    <option value="Terenuri">🏡 Terenuri & Construcții</option>
-                    <option value="Servicii">✨ Servicii & Enchant-uri</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Preț</label>
-                <input type="text" id="adPrice" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>Insignă</label>
-                <select id="adBadge" class="form-control">
-                    <option value="">Fără</option>
-                    <option value="rar">Rar</option>
-                    <option value="top">Ofertă Top</option>
-                    <option value="nego">Negociabil</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Emoji Sugestiv</label>
-                <input type="text" id="adEmoji" class="form-control" value="📦">
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Publică</button>
-        </form>
-    </div>
-
-    <div class="toast" id="toastMessage">Mesaj salvat!</div>
+    <!-- NOTIFICARE DINAMICĂ TOAST -->
+    <div class="toast" id="toastMessage">Sistem actualizat!</div>
 
 </body>
 </html>
