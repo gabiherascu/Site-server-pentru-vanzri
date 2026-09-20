@@ -1,189 +1,249 @@
-// Baza de date locală inițială (Mock Data)
-let dataset = [
-    { id: 1, title: "Sabie Netherite Max Stats - Sharpness V", price: "16 Diamante", category: "Armuri/Unelte", seller: "Xenesthis", online: true, badge: "top", emoji: "⚔️", date: "Azi" },
-    { id: 2, title: "Stoc 5 Shulker Box-uri cu Quartz", price: "32 Emeralds", category: "Resurse", seller: "CraftyV", online: false, badge: "nego", emoji: "📦", date: "Ieri" },
-    { id: 3, title: "Teren protejat lângă Spawn (20x20)", price: "Schimb pe Beacon", category: "Terenuri", seller: "BuilderPro", online: true, badge: "rar", emoji: "🏡", date: "Acum 2 ore" },
-    { id: 4, title: "Serviciu Mending la comandă", price: "5 Coins / carte", category: "Servicii", seller: "WizardMC", online: true, badge: "", emoji: "✨", date: "Azi" }
+// Date inițiale de test
+let ads = [
+    {
+        id: 1,
+        title: "Târnăcop Netherite Eficiență V",
+        category: "Netherite",
+        price: "48 Diamante",
+        description: "Târnăcop full enchant (Efficiency V, Unbreaking III, Fortune III, Mending). Durabilitate maximă.",
+        author: "AlexPro123",
+        image: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 2,
+        title: "Beacon Max Level (Full Pyramide)",
+        category: "Beacon",
+        price: "2 Shulker Box Diamante",
+        description: "Beacon complet funcțional pregătit de livrare. Oferă viteze și rezistență sporită.",
+        author: "CraftMaster",
+        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        id: 3,
+        title: "Elytra Unbreaking III + Mending",
+        category: "Elytra",
+        price: "64 Diamante",
+        description: "Aripă Elytra nouă, pregătită pentru zbor lung. Vine la pachet cu un stack de rachete level 3.",
+        author: "FlyGuy99",
+        image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=500&auto=format&fit=crop&q=60"
+    }
 ];
 
-// Inițializare aplicație
-document.addEventListener("DOMContentLoaded", () => {
-    loadAuth();
-    renderListings(dataset);
-    renderAdminPanel();
-    
-    // Filtrare dinamică la tastarea în bara de căutare
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const searchVal = e.target.value.toLowerCase();
-        const filtered = dataset.filter(item => item.title.toLowerCase().includes(searchVal));
-        renderListings(filtered);
-    });
+let activeCategory = 'all';
+
+// Elementele din DOM
+const adsGrid = document.getElementById('adsGrid');
+const searchInput = document.getElementById('searchInput');
+const resetSearchBtn = document.getElementById('resetSearchBtn');
+const categoryBtns = document.querySelectorAll('.category-btn');
+
+// Modale
+const addModal = document.getElementById('addModal');
+const deleteModal = document.getElementById('deleteModal');
+const profileModal = document.getElementById('profileModal');
+
+// Butoane de deschidere/închidere
+const openAddModalBtn = document.getElementById('openAddModalBtn');
+const closeAddModalBtn = document.getElementById('closeAddModal');
+const openDeleteModalBtn = document.getElementById('openDeleteModalBtn');
+const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+const openProfileBtn = document.getElementById('openProfileBtn');
+const closeProfileModalBtn = document.getElementById('closeProfileModal');
+
+// Formular
+const addAdForm = document.getElementById('addAdForm');
+
+// Inițializare
+document.addEventListener('DOMContentLoaded', () => {
+    renderAds();
+    setupEventListeners();
 });
 
-// Randare grid anunțuri pe pagina principală
-function renderListings(items) {
-    const grid = document.getElementById('listingsGrid');
-    grid.innerHTML = "";
+// Afișare anunțuri pe pagină
+function renderAds() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
 
-    if (items.length === 0) {
-        grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); margin-top: 40px;">Nu s-a găsit niciun anunț conform criteriilor.</p>`;
+    const filteredAds = ads.filter(ad => {
+        const matchesCategory = activeCategory === 'all' || ad.category === activeCategory;
+        const matchesSearch = ad.title.toLowerCase().includes(searchTerm) || 
+                              ad.description.toLowerCase().includes(searchTerm) ||
+                              ad.author.toLowerCase().includes(searchTerm);
+        return matchesCategory && matchesSearch;
+    });
+
+    adsGrid.innerHTML = '';
+
+    if (filteredAds.length === 0) {
+        adsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">Nu s-au găsit anunțuri corespunzătoare.</p>';
         return;
     }
 
-    items.forEach(item => {
-        const badgeHTML = item.badge ? `<span class="badge badge-${item.badge}">${item.badge}</span>` : '';
-        const statusClass = item.online ? 'status-online' : 'status-offline';
-        const ingameCommand = `/msg ${item.seller} Vreau sa cumpar "${item.title}" cu ${item.price}`;
-
+    filteredAds.forEach(ad => {
         const card = document.createElement('div');
         card.className = 'ad-card';
         card.innerHTML = `
-            <div class="ad-thumbnail-wrapper">
-                ${item.emoji}
-                <div class="ad-badges">${badgeHTML}</div>
-                <div class="status-indicator ${statusClass}" title="${item.online ? 'Online pe server' : 'Offline'}"></div>
-            </div>
-            <div class="ad-details">
-                <div class="ad-title">${item.title}</div>
-                <div class="ad-price">${item.price}</div>
-                <div class="ad-meta">Vânzător: <b>${item.seller}</b> • ${item.date}</div>
-                <div class="ad-actions">
-                    <button class="btn btn-secondary" style="flex: 1; font-size: 12px; padding: 6px;" onclick="copyToClipboard('${ingameCommand}')">
-                        📋 Copiază Comanda
+            <img src="${ad.image}" alt="${ad.title}" class="ad-image">
+            <div class="ad-body">
+                <span class="ad-category-tag">${ad.category}</span>
+                <h3 class="ad-title">${escapeHtml(ad.title)}</h3>
+                <div class="ad-price"><i class="fa-solid fa-gem"></i> ${escapeHtml(ad.price)}</div>
+                <p class="ad-desc">${escapeHtml(ad.description)}</p>
+                <div class="ad-footer">
+                    <span><i class="fa-solid fa-user"></i> ${escapeHtml(ad.author)}</span>
+                    <button class="btn btn-danger" onclick="deleteAd(${ad.id})" style="padding: 4px 8px; font-size:0.75rem;">
+                        <i class="fa-solid fa-trash"></i> Șterge
                     </button>
                 </div>
             </div>
         `;
-        grid.appendChild(card);
+        adsGrid.appendChild(card);
     });
 }
 
-// Randare panou administrare (Ștergere rapidă)
-function renderAdminPanel() {
-    const list = document.getElementById('myItemsList');
-    list.innerHTML = "";
-    
-    dataset.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'manage-item';
-        div.innerHTML = `
-            <span>${item.emoji} ${item.title.substring(0, 22)}...</span>
-            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteAd(${item.id})">Dezactivează</button>
-        `;
-        list.appendChild(div);
+// Setare Ascultători de Evenimente (Event Listeners)
+function setupEventListeners() {
+    // Căutare text
+    searchInput.addEventListener('input', renderAds);
+
+    // Resetare Filtre
+    resetSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        activeCategory = 'all';
+        categoryBtns.forEach(btn => btn.classList.remove('active'));
+        categoryBtns[0].classList.add('active');
+        renderAds();
     });
+
+    // Filtre Categorie
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeCategory = btn.getAttribute('data-category');
+            renderAds();
+        });
+    });
+
+    // Deschidere/Închidere Modale
+    openAddModalBtn.addEventListener('click', () => toggleModal(addModal, true));
+    closeAddModalBtn.addEventListener('click', () => toggleModal(addModal, false));
+
+    openDeleteModalBtn.addEventListener('click', () => {
+        renderDeleteList();
+        toggleModal(deleteModal, true);
+    });
+    closeDeleteModalBtn.addEventListener('click', () => toggleModal(deleteModal, false));
+
+    openProfileBtn.addEventListener('click', () => {
+        document.getElementById('profileAdCount').textContent = ads.length;
+        toggleModal(profileModal, true);
+    });
+    closeProfileModalBtn.addEventListener('click', () => toggleModal(profileModal, false));
+
+    // Închidere la click în afara ferestrei modale
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+            toggleModal(e.target, false);
+        }
+    });
+
+    // Trimitere Formular Adăugare Anunț
+    addAdForm.addEventListener('submit', handleFormSubmit);
 }
 
-// Ștergere / Dezactivare Anunț
-function deleteAd(id) {
-    dataset = dataset.filter(item => item.id !== id);
-    renderListings(dataset);
-    renderAdminPanel();
-    showToast("Anunțul a fost eliminat/dezactivat cu succes!");
+// Deschidere/Închidere Modal
+function toggleModal(modal, show) {
+    if (show) {
+        modal.classList.add('active');
+    } else {
+        modal.classList.remove('active');
+    }
 }
 
-// Creare și adăugare Anunț Nou
-function createNewAd(e) {
+// Salvare Anunț Nou
+function handleFormSubmit(e) {
     e.preventDefault();
+
     const title = document.getElementById('adTitle').value;
     const category = document.getElementById('adCategory').value;
     const price = document.getElementById('adPrice').value;
-    const badge = document.getElementById('adBadge').value;
-    const emoji = document.getElementById('adEmoji').value || "📦";
-    const seller = document.getElementById('mcUsername').value || "JucatorAnonim";
+    const description = document.getElementById('adDescription').value;
+    const author = document.getElementById('adAuthor').value;
+    const imageInput = document.getElementById('adImage');
 
+    let imageUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60";
+
+    if (imageInput.files && imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            imageUrl = event.target.result;
+            createNewAd(title, category, price, description, author, imageUrl);
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+    } else {
+        createNewAd(title, category, price, description, author, imageUrl);
+    }
+}
+
+function createNewAd(title, category, price, description, author, image) {
     const newAd = {
         id: Date.now(),
         title,
-        price,
         category,
-        seller,
-        online: true,
-        badge,
-        emoji,
-        date: "Acum"
+        price,
+        description,
+        author,
+        image
     };
 
-    dataset.unshift(newAd);
-    renderListings(dataset);
-    renderAdminPanel();
-    toggleDrawer('createAdDrawer');
-    document.getElementById('newAdForm').reset();
-    showToast("Anunțul tău a fost publicat pe server!");
+    ads.unshift(newAd);
+    renderAds();
+    addAdForm.reset();
+    toggleModal(addModal, false);
 }
 
-// Deschidere/Închidere Sertare Laterale
-function toggleDrawer(id) {
-    const drawer = document.getElementById(id);
-    if (drawer.classList.contains('open')) {
-        drawer.classList.remove('open');
-    } else {
-        document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
-        drawer.classList.add('open');
+// Ștergere Anunț
+function deleteAd(id) {
+    ads = ads.filter(ad => ad.id !== id);
+    renderAds();
+    renderDeleteList();
+}
+
+// Lista Anunțuri în Modalul de Ștergere
+function renderDeleteList() {
+    const container = document.getElementById('deleteAdsList');
+    container.innerHTML = '';
+
+    if (ads.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Nu există anunțuri de șters.</p>';
+        return;
     }
-}
 
-// Controlul Tab-urilor din Profil
-function switchTab(e, tabId) {
-    const parent = e.target.parentElement;
-    parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    e.target.classList.add('active');
-
-    const drawer = parent.parentElement;
-    drawer.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-}
-
-// Căutări Populare (Trending Tags)
-function quickSearch(term) {
-    document.getElementById('searchInput').value = term;
-    const filtered = dataset.filter(item => item.title.toLowerCase().includes(term.toLowerCase()));
-    renderListings(filtered);
-}
-
-// Filtre pe categorii principale
-function filterCategory(cat, btn) {
-    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    if (cat === 'Toate') {
-        renderListings(dataset);
-    } else {
-        const filtered = dataset.filter(item => item.category === cat);
-        renderListings(filtered);
-    }
-}
-
-// Copiere comenzi `/msg`
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast("Comandă copiată! Lipsește-o în chat-ul din joc (Ctrl+V)");
+    ads.forEach(ad => {
+        const item = document.createElement('div');
+        item.className = 'delete-item';
+        item.innerHTML = `
+            <div>
+                <strong>${escapeHtml(ad.title)}</strong>
+                <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(ad.author)}</div>
+            </div>
+            <button class="btn btn-danger" onclick="deleteAd(${ad.id})" style="padding: 6px 12px; font-size: 0.8rem;">
+                Șterge
+            </button>
+        `;
+        container.appendChild(item);
     });
 }
 
-// Afișare notificări discrete (Toast)
-function showToast(msg) {
-    const toast = document.getElementById('toastMessage');
-    toast.innerText = msg;
-    toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3500);
-}
-
-// One-Time Login: Salvare profil în LocalStorage
-function saveAuth() {
-    const user = document.getElementById('mcUsername').value;
-    localStorage.setItem('mc_market_user', user);
-    document.getElementById('profileBtn').innerText = `👤 ${user}`;
-    showToast("Datele de autentificare au fost salvate local!");
-}
-
-// One-Time Login: Încărcare profil din LocalStorage
-function loadAuth() {
-    const storedUser = localStorage.getItem('mc_market_user');
-    if (storedUser) {
-        document.getElementById('mcUsername').value = storedUser;
-        document.getElementById('profileBtn').innerText = `👤 ${storedUser}`;
-    }
+// Securizare text (XSS Prevention)
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, function(m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[m];
+    });
 }
